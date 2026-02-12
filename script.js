@@ -24,12 +24,19 @@ return {getBoard, printBoard}
 function Cell(){
     let value = '';
  
-    const getValue = () => value;
+  const getValue = () => value;
+  const setValue = (newValue) => {
+    if (value !== '') return; 
+    value = newValue;
+  };
 
-    return {
-      getValue
-    }
+  const addToken = (symbol) => {
+  value = symbol;
+};
+
+  return { getValue, setValue, addToken};
 }
+ 
 
 function GameController(){
  const playerOneName = 'Player one';
@@ -39,30 +46,69 @@ function GameController(){
 
  const players = [{
  name: playerOneName,
- symbol: 'X'
+ symbol: 'x'
  },
  {name: playerTwoName,
- symbol: 'O'
+ symbol: 'o'
  }
 ];
 let activePlayer = players[0];
 
-const switchPlayerturn = () => {
+const switchPlayerTurn = () => {
   activePlayer = activePlayer === players[0] ? players[1] : players[0];  
 };
 const getActivePlayer = () => activePlayer;
+
+const checkWin = (symbol) => {
+  const boardData = board.getBoard();
+
+  const winningCombos = [
+    [[0,0],[0,1],[0,2]],
+    [[1,0],[1,1],[1,2]],
+    [[2,0],[2,1],[2,2]],
+    [[0,0],[1,0],[2,0]],
+    [[0,1],[1,1],[2,1]],
+    [[0,2],[1,2],[2,2]],
+    [[0,0],[1,1],[2,2]],
+    [[0,2],[1,1],[2,0]],
+  ];
+
+  return winningCombos.some(combo =>
+    combo.every(([row, col]) =>
+      boardData[row][col].getValue() === symbol
+    )
+  );
+};
+
+const playRound = (row, column) => {
+  const boardData = board.getBoard();
+
+  
+  boardData[row][column].setValue(activePlayer.symbol);
+
+
+  if (checkWin(activePlayer.symbol)) {
+    console.log(`${activePlayer.name} wins!`);
+    return;
+  }
+
+  
+  switchPlayerTurn();
+};
 
   const printNewRound = () => {
     board.printBoard();
     console.log(`${getActivePlayer().name}'s turn. Place ${getActivePlayer().symbol}!`);
   };
 
-switchPlayerturn();
+
 printNewRound();
 
   return {
+    switchPlayerTurn,
     getActivePlayer,
-    getBoard: board.getBoard
+    getBoard: board.getBoard,
+    playRound
   };
 }
 
@@ -79,11 +125,12 @@ const activePlayer = game.getActivePlayer();
 
 playerTurnDiv.textContent = `${activePlayer.name}'s turn.`
 
-board.forEach(row => { 
-    row.forEach((cell, index) => {
+board.forEach((row, rowIndex) => { 
+    row.forEach((cell, columnIndex) => {
      const cellButton = document.createElement("button");
         cellButton.classList.add("cell");
-        cellButton.dataset.column = index
+        cellButton.dataset.row = rowIndex;
+        cellButton.dataset.column = columnIndex;
         cellButton.textContent = cell.getValue();
         boardDiv.appendChild(cellButton);
     })
@@ -92,30 +139,20 @@ board.forEach(row => {
 
 }
  function clickHandlerBoard(e) {
-    const selectedCell = e.target.classList.contains("cell");
-    if (!selectedCell) return;
-    
-    const activePlayerSymbol = game.getActivePlayer().symbol;
-    selectedCell.textContent = activePlayerSymbol;
-    
-    updateScreen();
+    const row = Number(e.target.dataset.row);
+const column = Number(e.target.dataset.column);
+
+if (Number.isNaN(row) || Number.isNaN(column)) return;
+
+  game.playRound(row, column);
+  updateScreen();
   }
   boardDiv.addEventListener("click", clickHandlerBoard);
-
-  // Initial render
+ 
+ 
   updateScreen();
 
 }
 
 ScreenController();
 
-
-
-//player 1 turn start with O
-//user presses cell when they are assigned
-//button dissapears and O replaces it
-//switch to player 2 who is x
-//keep the O with button gone
-//player 2 presses cell and the same happens
-//when the win conditions are met or tie announce it
-//reset game
