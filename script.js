@@ -1,204 +1,207 @@
 function GameBoard(){
-const rows = 3;
-const columns = 3;
+const row = 3;
+const column = 3;
 const board = [];
 
-for (let i = 0; i < rows; i++ ) {
+
+
+for (let i = 0; i < row; i++){
     board[i] = [];
-    for (let j = 0; j < columns; j++) {
-    board[i].push(Cell());;
-    }
+     for (let j = 0; j < column; j++){
+       board[i].push(Cell());
+     }
 }
-
-
-
 const getBoard = () => board;
-const printBoard = () => {
-    const boardWithCellValues = board.map((row) => row.map((cell) => cell.getValue()))
-    console.log(boardWithCellValues);
+return {
+getBoard,
 }
-const resetBoard = () => {
-  board.forEach(row =>
-    row.forEach(cell => cell.clear())
-  );
-};
-return {getBoard, printBoard, resetBoard}
 }
-
-function Cell() {
+function Cell(){
   let value = '';
-
-  const play = (symbol) => {
-    if (value !== '') return false;  
-    value = symbol;
-    return true;                    
-  };
-
-  const clear = () => {
-    value = '';
-  };
-
   const getValue = () => value;
-
-  return { play, clear, getValue };
-}
- 
-
-function GameController(){
- const playerOneName = 'Player one';
- const playerTwoName = 'Player two';
- let gameOver = false;
- let winner = null;
- 
- const board = GameBoard()
-
- const players = [{
- name: playerOneName,
- symbol: 'X'
- },
- {name: playerTwoName,
- symbol: 'O'
+  const setToken = (token) => {
+  value = token;
  }
-];
+ return {
+  getValue,
+  setToken,
+ }
+
+}
+function GameController(p1name = "Player One", p2name = "Player Two") {
+const board = GameBoard();
+const boardData = board.getBoard();
+let gameOver = false;
+
+const players = [{
+name: p1name,
+symbol: 'X'
+},
+{
+name: p2name,
+symbol: 'O'
+}]
 let activePlayer = players[0];
 
 const switchPlayerTurn = () => {
-  activePlayer = activePlayer === players[0] ? players[1] : players[0];  
-};
+activePlayer = activePlayer === players[0] ? players[1] : players[0];
+}
+
 const getActivePlayer = () => activePlayer;
 
-const checkWin = (symbol) => {
-  const boardData = board.getBoard();
-
-  const winningCombos = [
-    [[0,0],[0,1],[0,2]],
-    [[1,0],[1,1],[1,2]],
-    [[2,0],[2,1],[2,2]],
-    [[0,0],[1,0],[2,0]],
-    [[0,1],[1,1],[2,1]],
-    [[0,2],[1,2],[2,2]],
-    [[0,0],[1,1],[2,2]],
-    [[0,2],[1,1],[2,0]],
-  ];
-
-  return winningCombos.some(combo =>
-    combo.every(([row, col]) =>
-      boardData[row][col].getValue() === symbol
-    )
-  );
-};
-
 const playRound = (row, column) => {
-  if (gameOver || winner) return; 
-  
-  const boardData = board.getBoard();
-
-  
- const moveSuccessful = boardData[row][column].play(activePlayer.symbol);
-
- if (!moveSuccessful) return;
-
-  if (checkWin(activePlayer.symbol)) {
-    winner = activePlayer;
-    gameOver = true;
-    console.log(`${activePlayer.name} wins!`);
-    return;
-  }
- if (checkDraw()) {
-    gameOver = true;
-    winner = null;
-    return;
-  }
-  
+if (boardData[row][column].getValue() !== '' || gameOver){
+  return; };
+boardData[row][column].setToken(activePlayer.symbol);
+if (checkWin()) {
+  gameOver = true;
+  console.log(`${activePlayer.name} wins!`);
+} else if (checkDraw()) {
+  gameOver = true;
+  console.log("It's a draw!");
+} else {
+ 
   switchPlayerTurn();
-};
+}
+return boardData;
+
+
+}
+
+const winningCombinations = [
+  // Rows 
+  [[0, 0], [0, 1], [0, 2]],
+  [[1, 0], [1, 1], [1, 2]],
+  [[2, 0], [2, 1], [2, 2]],
+  // Columns
+  [[0, 0], [1, 0], [2, 0]],
+  [[0, 1], [1, 1], [2, 1]],
+  [[0, 2], [1, 2], [2, 2]],
+  // Diagonals
+  [[0, 0], [1, 1], [2, 2]],
+  [[0, 2], [1, 1], [2, 0]]
+];
+
+const checkWin = () => {
+const hasWon = winningCombinations.some(combo => {
+  return combo.every(coord => {
+    const cell = boardData[coord[0]][coord[1]];
+    return cell.getValue() !== '' && cell.getValue() === activePlayer.symbol;
+  });
+});
+
+if (hasWon){
+  gameOver= true;
+  console.log(`${activePlayer.name} wins!`)
+}
+return hasWon
+}
+
 const checkDraw = () => {
-  const boardData = board.getBoard();
-
-  return boardData.every(row =>
-    row.every(cell => cell.getValue() !== '')
-  );
-};
-
+ return boardData.flat().every(cell => cell.getValue() !== '');
   
+}
+const getGameOver = () => gameOver;
 
 const resetGame = () => {
-  board.resetBoard();
-  activePlayer = players[0];
-  gameOver = false;
-  winner = null;
-};
 
-
-const getWinner = () => winner;
-const isGameOver = () => gameOver;
-  return {
-    switchPlayerTurn,
-    getActivePlayer,
-    getBoard: board.getBoard,
-    playRound,
-    getWinner,
-    isGameOver,
-    resetGame
-   };
-}
-
-function ScreenController(){
-const game = GameController();
-const boardDiv = document.querySelector('.board');
-const playerTurnDiv = document.querySelector('.turn');
-const resetButton = document.querySelector('.reset')
-
-const updateScreen = () => {
-  boardDiv.textContent = "";
-
-  const board = game.getBoard();
-
-
-  board.forEach((row, rowIndex) => { 
-    row.forEach((cell, columnIndex) => {
-      const cellButton = document.createElement("button");
-      cellButton.classList.add("cell");
-      cellButton.dataset.row = rowIndex;
-      cellButton.dataset.column = columnIndex;
-      cellButton.textContent = cell.getValue();
-      boardDiv.appendChild(cellButton);
+  boardData.forEach(row => {
+    row.forEach(cell => {
+      cell.setToken(''); 
     });
   });
-
-  if (game.isGameOver()) {
-
-    const winner = game.getWinner();
-
-    if (winner) {
-      playerTurnDiv.textContent = `${winner.name} wins!`;
-    } else {
-      playerTurnDiv.textContent = "Draw!";
-    }
-
-  } else {
-    const activePlayer = game.getActivePlayer();
-    playerTurnDiv.textContent = `${activePlayer.name}'s turn`;
-  }
-};
- function clickHandlerBoard(e) {
-    const row = Number(e.target.dataset.row);
-const column = Number(e.target.dataset.column);
-
-if (Number.isNaN(row) || Number.isNaN(column)) return;
-
-  game.playRound(row, column);
-  updateScreen();
-  }
-  boardDiv.addEventListener("click", clickHandlerBoard);
- resetButton.addEventListener('click', () => {
-  game.resetGame();
-  updateScreen();
-});
- 
-  updateScreen();
+gameOver = false;
+activePlayer = players[0];
 
 }
 
-ScreenController();
+return {
+ playRound,
+ getActivePlayer,
+ switchPlayerTurn,
+ checkWin,
+ checkDraw,
+ getBoard: board.getBoard,
+ getGameOver,
+ resetGame
+}
+}
+
+const ScreenController = (function(){
+const boardDiv = document.querySelector('.board');
+const turnDiv = document.querySelector('.turn')
+const p1Input = document.querySelector('#p1')
+const p2Input = document.querySelector('#p2')
+const startButton = document.querySelector('.start')
+const resetButton = document.querySelector('.reset')
+
+let game;
+
+const updateScreen = () =>{
+  if (!game) return;
+const winnerFound = game.checkWin()
+const draw = game.checkDraw()
+const currentBoard = game.getBoard()
+const activePlayer = game.getActivePlayer()
+if (winnerFound){
+  turnDiv.textContent = `${activePlayer.name} wins!`;
+}
+else if (draw) {
+  turnDiv.textContent = "It's a draw!";
+}
+else turnDiv.textContent = `${activePlayer.name}'s turn!`;
+
+boardDiv.textContent = '';
+currentBoard.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+    const cellButton = document.createElement('button');
+    cellButton.classList.add('cell');
+    cellButton.textContent = cell.getValue();
+    cellButton.dataset.row = rowIndex;
+    cellButton.dataset.column = colIndex;
+    boardDiv.appendChild(cellButton);
+    });
+ });
+};
+
+const clickHandler = (e) => {
+ const selectedRow = e.target.dataset.row
+ const selectedColumn = e.target.dataset.column
+
+ if (!selectedRow || !selectedColumn) return;
+
+ game.playRound(selectedRow, selectedColumn)
+
+ updateScreen()
+}
+
+boardDiv.addEventListener('click', clickHandler);
+
+startButton.addEventListener('click', () => {
+ const playerOneName = p1Input.value || "Player One"
+ const playerTwoName = p2Input.value || "Player Two"
+
+ game = GameController(playerOneName, playerTwoName);
+
+boardDiv.classList.add('active');
+
+
+ updateScreen();
+
+ 
+})
+
+resetButton.addEventListener('click', () => {
+
+game.resetGame();
+boardDiv.textContent = '';
+turnDiv.textContent = '';
+boardDiv.classList.remove('active');
+
+})
+
+updateScreen();
+
+})();
+
 
