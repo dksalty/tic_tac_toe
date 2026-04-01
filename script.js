@@ -31,7 +31,9 @@ function Cell(){
 function GameController(p1name = "Player One", p2name = "Player Two") {
 const board = GameBoard();
 const boardData = board.getBoard();
-let gameOver = false;
+
+let winner = null;
+let status = 'playing';
 
 const players = [{
 name: p1name,
@@ -50,17 +52,22 @@ activePlayer = activePlayer === players[0] ? players[1] : players[0];
 const getActivePlayer = () => activePlayer;
 
 const playRound = (row, column) => {
-if (boardData[row][column].getValue() !== '' || gameOver){
+  
+if (boardData[row][column].getValue() !== '' || status === 'win' || status === 'draw'){
   return; };
 boardData[row][column].setToken(activePlayer.symbol);
+
+
 if (checkWin()) {
-  gameOver = true;
-  console.log(`${activePlayer.name} wins!`);
+  
+  winner = activePlayer;
+  status = 'win';
+
 } else if (checkDraw()) {
-  gameOver = true;
-  console.log("It's a draw!");
-} else {
  
+  status = 'draw';
+} else {
+  
   switchPlayerTurn();
 }
 return boardData;
@@ -91,8 +98,9 @@ const hasWon = winningCombinations.some(combo => {
 });
 
 if (hasWon){
-  gameOver= true;
-  console.log(`${activePlayer.name} wins!`)
+ winner = activePlayer;
+ status = 'win'
+ 
 }
 return hasWon
 }
@@ -101,16 +109,17 @@ const checkDraw = () => {
  return boardData.flat().every(cell => cell.getValue() !== '');
   
 }
-const getGameOver = () => gameOver;
 
+const getStatus = () => status;
+const checkWinner = () => winner;
 const resetGame = () => {
-
+   winner = null;
   boardData.forEach(row => {
     row.forEach(cell => {
       cell.setToken(''); 
     });
   });
-gameOver = false;
+status = 'playing';
 activePlayer = players[0];
 
 }
@@ -119,11 +128,10 @@ return {
  playRound,
  getActivePlayer,
  switchPlayerTurn,
- checkWin,
- checkDraw,
  getBoard: board.getBoard,
- getGameOver,
- resetGame
+ resetGame,
+ checkWinner,
+ getStatus
 }
 }
 
@@ -139,14 +147,14 @@ let game;
 
 const updateScreen = () =>{
   if (!game) return;
-const winnerFound = game.checkWin()
-const draw = game.checkDraw()
+let checkWin = game.checkWinner();
+let currentStatus = game.getStatus();
 const currentBoard = game.getBoard()
 const activePlayer = game.getActivePlayer()
-if (winnerFound){
+if (currentStatus === 'win' && checkWin === activePlayer){
   turnDiv.textContent = `${activePlayer.name} wins!`;
 }
-else if (draw) {
+else if (currentStatus === 'draw') {
   turnDiv.textContent = "It's a draw!";
 }
 else turnDiv.textContent = `${activePlayer.name}'s turn!`;
