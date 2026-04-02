@@ -97,11 +97,7 @@ const hasWon = winningCombinations.some(combo => {
   });
 });
 
-if (hasWon){
- winner = activePlayer;
- status = 'win'
- 
-}
+
 return hasWon
 }
 
@@ -111,7 +107,7 @@ const checkDraw = () => {
 }
 
 const getStatus = () => status;
-const checkWinner = () => winner;
+const getWinner = () => winner;
 const resetGame = () => {
    winner = null;
   boardData.forEach(row => {
@@ -130,7 +126,7 @@ return {
  switchPlayerTurn,
  getBoard: board.getBoard,
  resetGame,
- checkWinner,
+ getWinner,
  getStatus
 }
 }
@@ -147,12 +143,12 @@ let game;
 
 const updateScreen = () =>{
   if (!game) return;
-let checkWin = game.checkWinner();
+let getWin = game.getWinner();
 let currentStatus = game.getStatus();
 const currentBoard = game.getBoard()
 const activePlayer = game.getActivePlayer()
-if (currentStatus === 'win' && checkWin === activePlayer){
-  turnDiv.textContent = `${activePlayer.name} wins!`;
+if (currentStatus === 'win' && getWin){
+  turnDiv.textContent = `${checkWin.name} wins!`;
 }
 else if (currentStatus === 'draw') {
   turnDiv.textContent = "It's a draw!";
