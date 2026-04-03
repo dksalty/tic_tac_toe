@@ -33,7 +33,14 @@ const board = GameBoard();
 const boardData = board.getBoard();
 
 let winner = null;
-let status = 'playing';
+
+const STATES = {
+  PLAYING: 'playing',
+  WIN: 'win',
+  DRAW: 'draw'
+};
+
+let status = STATES.PLAYING;
 
 const players = [{
 name: p1name,
@@ -53,7 +60,7 @@ const getActivePlayer = () => activePlayer;
 
 const playRound = (row, column) => {
   
-if (boardData[row][column].getValue() !== '' || status === 'win' || status === 'draw'){
+if (boardData[row][column].getValue() !== '' || status === STATES.WIN || status === STATES.DRAW){
   return; };
 boardData[row][column].setToken(activePlayer.symbol);
 
@@ -61,11 +68,11 @@ boardData[row][column].setToken(activePlayer.symbol);
 if (checkWin()) {
   
   winner = activePlayer;
-  status = 'win';
+  status = STATES.WIN;
 
 } else if (checkDraw()) {
  
-  status = 'draw';
+  status = STATES.DRAW;
 } else {
   
   switchPlayerTurn();
@@ -148,7 +155,7 @@ let currentStatus = game.getStatus();
 const currentBoard = game.getBoard()
 const activePlayer = game.getActivePlayer()
 if (currentStatus === 'win' && getWin){
-  turnDiv.textContent = `${checkWin.name} wins!`;
+  turnDiv.textContent = `${getWin.name} wins!`;
 }
 else if (currentStatus === 'draw') {
   turnDiv.textContent = "It's a draw!";
